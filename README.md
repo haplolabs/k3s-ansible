@@ -1,5 +1,7 @@
 # Automated build of HA k3s Cluster with `kube-vip` and MetalLB
 
+This is my fork of techo-tim's `k3s-ansible` repo that has many to thank. Good stuff!
+
 ![Fully Automated K3S etcd High Availability Install](https://img.youtube.com/vi/CbkEWcUZ7zM/0.jpg)
 
 This playbook will build an HA Kubernetes cluster with `k3s`, `kube-vip` and MetalLB via `ansible`.
