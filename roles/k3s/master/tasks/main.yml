@@ -13,59 +13,11 @@
   args:
     warn: false  # The ansible systemd module does not support reset-failed
 
-- name: Create manifests directory on first master
-  file:
-    path: /var/lib/rancher/k3s/server/manifests
-    state: directory
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
+- name: Deploy vip manifest
+  include_tasks: vip.yml
 
-- name: Copy vip rbac manifest to first master
-  template:
-    src: "vip.rbac.yaml.j2"
-    dest: "/var/lib/rancher/k3s/server/manifests/vip.rbac.yaml"
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
-
-- name: Copy vip manifest to first master
-  template:
-    src: "vip.yaml.j2"
-    dest: "/var/lib/rancher/k3s/server/manifests/vip.yaml"
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
-
-- name: Copy metallb namespace manifest to first master
-  template:
-    src: "metallb.namespace.j2"
-    dest: "/var/lib/rancher/k3s/server/manifests/metallb.namespace.yaml"
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
-
-- name: Copy metallb ConfigMap manifest to first master
-  template:
-    src: "metallb.configmap.j2"
-    dest: "/var/lib/rancher/k3s/server/manifests/metallb.configmap.yaml"
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
-
-- name: Copy metallb main manifest to first master
-  template:
-    src: "metallb.yaml.j2"
-    dest: "/var/lib/rancher/k3s/server/manifests/metallb.yaml"
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
+- name: Deploy metallb manifest
+  include_tasks: metallb.yml
 
 - name: Init cluster inside the transient k3s-init service
   command:
@@ -74,8 +26,6 @@
                       --unit=k3s-init \
                       k3s server {{ server_init_args }}"
     creates: "{{ systemd_dir }}/k3s.service"
-  args:
-    warn: false  # The ansible systemd module does not support transient units
 
 - name: Verification
   block:
@@ -88,11 +38,18 @@
       delay: 10
       changed_when: false
   always:
+    - name: Save logs of k3s-init.service
+      include_tasks: fetch_k3s_init_logs.yml
+      when: log_destination
+      vars:
+        log_destination: >-
+          {{ lookup('ansible.builtin.env', 'ANSIBLE_K3S_LOG_DIR', default=False) }}
     - name: Kill the temporary service used for initialization
       systemd:
         name: k3s-init
         state: stopped
       failed_when: false
+  when: not ansible_check_mode
 
 - name: Copy K3s service file
   register: k3s_service
@@ -140,25 +97,32 @@
 
 - name: Create directory .kube
   file:
-    path: ~{{ ansible_user }}/.kube
+    path: "{{ ansible_user_dir }}/.kube"
     state: directory
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}"
     mode: "u=rwx,g=rx,o="
 
 - name: Copy config file to user home directory
   copy:
     src: /etc/rancher/k3s/k3s.yaml
-    dest: ~{{ ansible_user }}/.kube/config
+    dest: "{{ ansible_user_dir }}/.kube/config"
     remote_src: yes
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}"
     mode: "u=rw,g=,o="
 
-- name: Configure kubectl cluster to https://{{ apiserver_endpoint }}:6443
+- name: Configure kubectl cluster to {{ endpoint_url }}
   command: >-
     k3s kubectl config set-cluster default
-      --server=https://{{ apiserver_endpoint }}:6443
-      --kubeconfig ~{{ ansible_user }}/.kube/config
+      --server={{ endpoint_url }}
+      --kubeconfig {{ ansible_user_dir }}/.kube/config
   changed_when: true
+  vars:
+    endpoint_url: >-
+      https://{{ apiserver_endpoint | ansible.utils.ipwrap }}:6443
+  # Deactivated linter rules:
+  #   - jinja[invalid]: As of version 6.6.0, ansible-lint complains that the input to ipwrap
+  #                     would be undefined. This will not be the case during playbook execution.
+  # noqa jinja[invalid]
 
 - name: Create kubectl symlink
   file:
@@ -171,3 +135,25 @@
     src: /usr/local/bin/k3s
     dest: /usr/local/bin/crictl
     state: link
+
+- name: Get contents of manifests folder
+  find:
+    paths: /var/lib/rancher/k3s/server/manifests
+    file_type: file
+  register: k3s_server_manifests
+
+- name: Get sub dirs of manifests folder
+  find:
+    paths: /var/lib/rancher/k3s/server/manifests
+    file_type: directory
+  register: k3s_server_manifests_directories
+
+- name: Remove manifests and folders that are only needed for bootstrapping cluster so k3s doesn't auto apply on start
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items:
+    - "{{ k3s_server_manifests.files }}"
+    - "{{ k3s_server_manifests_directories.files }}"
+  loop_control:
+    label: "{{ item.path }}"
