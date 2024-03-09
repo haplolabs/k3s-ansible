@@ -6,6 +6,13 @@
     state: stopped
   failed_when: false
 
+# k3s-init won't work if the port is already in use
+- name: Stop k3s
+  systemd:
+    name: k3s
+    state: stopped
+  failed_when: false
+
 - name: Clean previous runs of k3s-init  # noqa command-instead-of-module
   # The systemd module does not support "reset-failed", so we need to resort to command.
   command: systemctl reset-failed k3s-init
@@ -22,6 +29,12 @@
 - name: Deploy metallb manifest
   include_tasks: metallb.yml
   tags: metallb
+  when: kube_vip_lb_ip_range is not defined and (not cilium_bgp or cilium_iface is not defined)
+
+- name: Deploy kube-vip manifest
+  include_tasks: kube-vip.yml
+  tags: kubevip
+  when: kube_vip_lb_ip_range is defined
 
 - name: Init cluster inside the transient k3s-init service
   command:
@@ -29,7 +42,7 @@
                       -p Restart=on-failure \
                       --unit=k3s-init \
                       k3s server {{ server_init_args }}"
-    creates: "{{ systemd_dir }}/k3s.service"
+    creates: "{{ systemd_dir }}/k3s-init.service"
 
 - name: Verification
   when: not ansible_check_mode

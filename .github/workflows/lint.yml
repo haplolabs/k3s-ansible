@@ -5,37 +5,27 @@ on:
 jobs:
   pre-commit-ci:
     name: Pre-Commit
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       PYTHON_VERSION: "3.11"
 
     steps:
       - name: Check out the codebase
-        uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791 # v3 2.5.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # 4.1.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # 2.3.3
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # 5.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip' # caching pip dependencies
 
-      - name: Cache pip
-        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # 3.0.11
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('./requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Cache Ansible
-        uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # 3.0.11
+      - name: Restore Ansible cache
+        uses: actions/cache/restore@ab5e6d0c87105b4c9c2047343972218f562e4319 # 4.0
         with:
           path: ~/.ansible/collections
-          key: ${{ runner.os }}-ansible-${{ hashFiles('collections/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-ansible-
+          key: ansible-${{ hashFiles('collections/requirements.yml') }}
 
       - name: Install dependencies
         run: |
@@ -47,21 +37,17 @@ jobs:
           python3 -m pip install -r requirements.txt
           echo "::endgroup::"
 
-          echo "::group::Install Ansible role requirements from collections/requirements.yml"
-          ansible-galaxy install -r collections/requirements.yml
-          echo "::endgroup::"
-
       - name: Run pre-commit
-        uses: pre-commit/action@646c83fcd040023954eafda54b4db0192ce70507 # 3.0.0
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # 3.0.1
 
   ensure-pinned-actions:
     name: Ensure SHA Pinned Actions
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
-        uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791 # v3 2.5.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # 4.1.1
       - name: Ensure SHA pinned actions
-        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@af2eb3226618e2494e3d9084f515ad6dcf16e229 # 2.0.1
+        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@ba37328d4ea95eaf8b3bd6c6cef308f709a5f2ec # 3.0.3
         with:
           allowlist: |
             aws-actions/
