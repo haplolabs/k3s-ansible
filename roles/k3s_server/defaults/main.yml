@@ -8,7 +8,7 @@ group_name_master: master
 kube_vip_arp: true
 kube_vip_iface:
 kube_vip_cloud_provider_tag_version: main
-kube_vip_tag_version: v0.7.2
+kube_vip_tag_version: v1.2.0
 
 kube_vip_bgp: false
 kube_vip_bgp_routerid: 127.0.0.1
