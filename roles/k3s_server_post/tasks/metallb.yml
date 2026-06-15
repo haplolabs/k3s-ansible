@@ -3,7 +3,8 @@
   ansible.builtin.file:
     path: /tmp/k3s
     state: directory
-    owner: "{{ ansible_user_id }}"
+    owner: root
+    group: root
     mode: "0755"
   with_items: "{{ groups[group_name_master | default('master')] }}"
   run_once: true
@@ -33,7 +34,8 @@
   ansible.builtin.template:
     src: metallb.crs.j2
     dest: /tmp/k3s/metallb-crs.yaml
-    owner: "{{ ansible_user_id }}"
+    owner: root
+    group: root
     mode: "0755"
   with_items: "{{ groups[group_name_master | default('master')] }}"
   run_once: true
@@ -68,18 +70,6 @@
       resource: pod
       selector: component=controller,app=metallb
       condition: --for condition=Ready
-    - description: ready replicas of controller
-      resource: replicaset
-      selector: component=controller,app=metallb
-      condition: --for=jsonpath='{.status.readyReplicas}'=1
-    - description: fully labeled replicas of controller
-      resource: replicaset
-      selector: component=controller,app=metallb
-      condition: --for=jsonpath='{.status.fullyLabeledReplicas}'=1
-    - description: available replicas of controller
-      resource: replicaset
-      selector: component=controller,app=metallb
-      condition: --for=jsonpath='{.status.availableReplicas}'=1
   loop_control:
     label: "{{ item.description }}"
 

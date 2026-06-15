@@ -13,7 +13,10 @@
   when: cilium_iface is defined
 
 - name: Deploy metallb pool
-  ansible.builtin.include_tasks: metallb.yml
+  ansible.builtin.include_tasks:
+    file: metallb.yml
+    apply:
+      tags: metallb
   tags: metallb
   when: kube_vip_lb_ip_range is not defined and (not cilium_bgp or cilium_iface is not defined)
 
