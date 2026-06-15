@@ -52,8 +52,8 @@ metal_lb_mode: "layer2"
 # metal_lb_bgp_my_asn: "64513"
 # metal_lb_bgp_peer_asn: "64512"
 # metal_lb_bgp_peer_address: "198.51.100.1"
-metal_lb_speaker_tag_version: "v0.14.9"
-metal_lb_controller_tag_version: "v0.14.9"
+metal_lb_speaker_tag_version: "v0.16.1"
+metal_lb_controller_tag_version: "v0.16.1"
 metal_lb_ip_range: "192.0.2.90-192.0.2.98"
 
 proxmox_lxc_configure: false
