@@ -28,7 +28,7 @@ To test on your local machine, follow these steps:
 
 Make sure that the following software packages are available on your system:
 
-- [Python 3](https://www.python.org/downloads)
+- [Python 3.12 or newer](https://www.python.org/downloads)
 - [Vagrant](https://www.vagrantup.com/downloads)
 - [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 
