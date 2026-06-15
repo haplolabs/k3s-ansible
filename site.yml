@@ -1,4 +1,9 @@
 ---
+- name: Gather facts for all nodes (required for --limit upgrades)
+  hosts: all
+  gather_facts: true
+  tasks: []
+
 - name: Pre tasks
   hosts: all
   pre_tasks:

@@ -1,0 +1,68 @@
+---
+# Example inventory for the haplolabs cluster shape. Keep live values in
+# inventory/haplolabs/, which is ignored and should remain private.
+k3s_version: v1.34.8+k3s1
+ansible_user: serveradmin
+systemd_dir: /etc/systemd/system
+system_timezone: "America/Denver"
+
+flannel_iface: "eth0"
+calico_iface: "eth0"
+calico_ebpf: false
+calico_tag: "v3.31.0"
+
+# Leave cilium_iface undefined when Calico is the active CNI.
+# cilium_iface: "eth0"
+cilium_mode: "native"
+cilium_tag: "v1.16.0"
+cilium_hubble: true
+cilium_bgp: false
+cilium_bgp_my_asn: "64513"
+cilium_bgp_peer_asn: "64512"
+cilium_bgp_peer_address: "198.51.100.1"
+cilium_bgp_lb_cidr: "198.51.100.0/24"
+
+cluster_cidr: "10.43.0.0/16"
+apiserver_endpoint: "192.0.2.75"
+
+# Replace in the private inventory only. Do not commit live bootstrap tokens.
+k3s_token: "REPLACE_WITH_PRIVATE_CLUSTER_TOKEN"
+
+k3s_node_ip: '{{ ansible_facts[flannel_iface]["ipv4"]["address"] }}'
+k3s_master_taint: "{{ true if groups['node'] | default([]) | length >= 1 else false }}"
+
+extra_args: >-
+  --flannel-iface={{ flannel_iface }}
+  --node-ip={{ k3s_node_ip }}
+
+extra_server_args: >-
+  {{ extra_args }}
+  {{ '--node-taint node-role.kubernetes.io/master=true:NoSchedule' if k3s_master_taint else '' }}
+  --tls-san {{ apiserver_endpoint }}
+  --disable servicelb
+  --disable traefik
+
+extra_agent_args: >-
+  {{ extra_args }}
+
+kube_vip_tag_version: "v0.8.9"
+
+metal_lb_type: "native"
+metal_lb_mode: "layer2"
+# metal_lb_bgp_my_asn: "64513"
+# metal_lb_bgp_peer_asn: "64512"
+# metal_lb_bgp_peer_address: "198.51.100.1"
+metal_lb_speaker_tag_version: "v0.14.9"
+metal_lb_controller_tag_version: "v0.14.9"
+metal_lb_ip_range: "192.0.2.90-192.0.2.98"
+
+proxmox_lxc_configure: false
+proxmox_lxc_ssh_user: root
+proxmox_lxc_ct_ids:
+  - 200
+  - 201
+  - 202
+  - 203
+  - 204
+
+custom_registries: false

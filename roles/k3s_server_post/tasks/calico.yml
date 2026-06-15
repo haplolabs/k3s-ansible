@@ -104,7 +104,7 @@
           type: daemonset
           selector: k8s-app=calico-node
           namespace: calico-system
-        - { name: calico-apiserver, type: deployment, namespace: calico-apiserver }
+        - { name: calico-apiserver, type: deployment, namespace: calico-system }
       loop_control:
         label: "{{ item.type }}/{{ item.name }}"
 

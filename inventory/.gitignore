@@ -1,3 +1,6 @@
+# Ignore real cluster inventories unless explicitly allow-listed.
 /*
+
 !.gitignore
 !sample/
+!haplolabs.example/
