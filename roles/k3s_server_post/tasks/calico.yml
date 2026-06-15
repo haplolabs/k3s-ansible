@@ -27,21 +27,19 @@
         group: root
         mode: "0755"
 
-    - name: Deploy or replace Tigera Operator
-      block:
-        - name: Deploy Tigera Operator
-          ansible.builtin.command:
-            cmd: "{{ k3s_kubectl_binary | default('k3s kubectl') }} create -f /tmp/k3s/tigera-operator.yaml"
-          register: create_operator
-          changed_when: "'created' in create_operator.stdout"
-          failed_when: "'Error' in create_operator.stderr and 'already exists' not in create_operator.stderr"
-      rescue:
-        - name: Replace existing Tigera Operator
-          ansible.builtin.command:
-            cmd: "{{ k3s_kubectl_binary | default('k3s kubectl') }} replace -f /tmp/k3s/tigera-operator.yaml"
-          register: replace_operator
-          changed_when: "'replaced' in replace_operator.stdout"
-          failed_when: "'Error' in replace_operator.stderr"
+    - name: Apply Tigera Operator and Calico CRDs
+      ansible.builtin.command:
+        cmd: >-
+          {{ k3s_kubectl_binary | default('k3s kubectl') }} apply
+          --server-side
+          --force-conflicts
+          -f /tmp/k3s/tigera-operator.yaml
+      register: apply_operator
+      changed_when: >-
+        'created' in apply_operator.stdout or
+        'configured' in apply_operator.stdout or
+        'serverside-applied' in apply_operator.stdout
+      failed_when: "'Error' in apply_operator.stderr"
 
     - name: Wait for Tigera Operator resources
       ansible.builtin.command: >-
@@ -59,21 +57,12 @@
       loop_control:
         label: "{{ item.type }}/{{ item.name }}"
 
-    - name: Deploy Calico custom resources
-      block:
-        - name: Deploy custom resources for Calico
-          ansible.builtin.command:
-            cmd: "{{ k3s_kubectl_binary | default('k3s kubectl') }} create -f /tmp/k3s/custom-resources.yaml"
-          register: create_cr
-          changed_when: "'created' in create_cr.stdout"
-          failed_when: "'Error' in create_cr.stderr and 'already exists' not in create_cr.stderr"
-      rescue:
-        - name: Apply new Calico custom resource manifest
-          ansible.builtin.command:
-            cmd: "{{ k3s_kubectl_binary | default('k3s kubectl') }} apply -f /tmp/k3s/custom-resources.yaml"
-          register: apply_cr
-          changed_when: "'configured' in apply_cr.stdout or 'created' in apply_cr.stdout"
-          failed_when: "'Error' in apply_cr.stderr"
+    - name: Apply Calico custom resources
+      ansible.builtin.command:
+        cmd: "{{ k3s_kubectl_binary | default('k3s kubectl') }} apply -f /tmp/k3s/custom-resources.yaml"
+      register: apply_cr
+      changed_when: "'configured' in apply_cr.stdout or 'created' in apply_cr.stdout"
+      failed_when: "'Error' in apply_cr.stderr"
 
     - name: Wait for Calico system resources to be available
       ansible.builtin.command: >-

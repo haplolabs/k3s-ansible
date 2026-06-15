@@ -9,7 +9,7 @@ system_timezone: "America/Denver"
 flannel_iface: "eth0"
 calico_iface: "eth0"
 calico_ebpf: false
-calico_tag: "v3.31.0"
+calico_tag: "v3.32.0"
 
 # Leave cilium_iface undefined when Calico is the active CNI.
 # cilium_iface: "eth0"

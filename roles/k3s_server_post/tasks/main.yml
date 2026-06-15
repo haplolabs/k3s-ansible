@@ -1,6 +1,9 @@
 ---
 - name: Deploy calico
-  ansible.builtin.include_tasks: calico.yml
+  ansible.builtin.include_tasks:
+    file: calico.yml
+    apply:
+      tags: calico
   tags: calico
   when: calico_iface is defined and cilium_iface is not defined
 
