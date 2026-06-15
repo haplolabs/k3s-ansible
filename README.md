@@ -30,11 +30,11 @@ on processor architecture:
 
 ## ✅ System requirements
 
-- Control Node (the machine you are running `ansible` commands) must have Ansible 2.11+ If you need a quick primer on Ansible [you can check out my docs and setting up Ansible](https://technotim.live/posts/ansible-automation/).
+- Control Node (the machine you are running `ansible` commands) should use Python 3.12 or newer and install the pinned Python tooling from `requirements.txt`, currently including `ansible-core` 2.21.x. If you need a quick primer on Ansible [you can check out my docs and setting up Ansible](https://technotim.live/posts/ansible-automation/).
 
 - You will also need to install collections that this playbook uses by running `ansible-galaxy collection install -r ./collections/requirements.yml` (important❗)
 
-- [`netaddr` package](https://pypi.org/project/netaddr/) must be available to Ansible. If you have installed Ansible via apt, this is already taken care of. If you have installed Ansible via `pip`, make sure to install `netaddr` into the respective virtual environment.
+- [`netaddr` package](https://pypi.org/project/netaddr/) must be available to Ansible. Installing `requirements.txt` into the active virtual environment provides it with the rest of the supported tooling stack.
 
 - `server` and `agent` nodes should have passwordless SSH access, if not you can supply arguments to provide credentials `--ask-pass --ask-become-pass` to each command.
 

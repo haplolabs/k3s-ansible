@@ -17,7 +17,7 @@ jobs:
           - kube-vip
       fail-fast: false
     env:
-      PYTHON_VERSION: "3.11"
+      PYTHON_VERSION: "3.12"
 
     steps:
       - name: Check out the codebase
