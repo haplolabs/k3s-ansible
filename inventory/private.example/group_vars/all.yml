@@ -1,8 +1,8 @@
 ---
-# Example inventory for the haplolabs cluster shape. Keep live values in
-# inventory/haplolabs/, which is ignored and should remain private.
+# Example inventory for a private cluster shape. Keep live values in
+# an ignored inventory directory or a separate private inventory repository.
 k3s_version: v1.34.8+k3s1
-ansible_user: serveradmin
+ansible_user: ansible
 systemd_dir: /etc/systemd/system
 system_timezone: "America/Denver"
 
