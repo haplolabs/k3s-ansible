@@ -14,26 +14,24 @@ The one-host guard runs before fact gathering, so an accidental unbounded run fa
 
 ## Preflight
 
-Export the SSH agent used for node access before running Ansible:
+Confirm the SSH agent or other authentication method used for node access is available before running Ansible:
 
 ```bash
-export SSH_AUTH_SOCK=/tmp/ssh-BatCCCSiZa0r/agent.10452
-export SSH_AGENT_PID=10453
 ssh-add -l
 ```
 
 Confirm the target version in the private inventory:
 
 ```bash
-rg -n '^k3s_version:' inventory/haplolabs/group_vars/all.yml
+rg -n '^k3s_version:' inventory/private/group_vars/all.yml
 ```
 
 Run safe checks:
 
 ```bash
-ansible-inventory -i inventory/haplolabs/hosts.yml --graph
-ansible-playbook --syntax-check -i inventory/haplolabs/hosts.yml upgrade-k3s-one-node.yml
-ansible-playbook --list-hosts -i inventory/haplolabs/hosts.yml upgrade-k3s-one-node.yml --limit k8s-srv-0
+ansible-inventory -i inventory/private/hosts.yml --graph
+ansible-playbook --syntax-check -i inventory/private/hosts.yml upgrade-k3s-one-node.yml
+ansible-playbook --list-hosts -i inventory/private/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
 kubectl get nodes -o wide
 kubectl get --raw='/readyz?verbose'
 kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded -o wide
@@ -48,12 +46,12 @@ Upgrade server/control-plane nodes first, one at a time. Then upgrade worker nod
 Recommended order for this cluster:
 
 ```text
-k8s-srv-0
-k8s-srv-1
-k8s-srv-2
-k8s-worker-0
-k8s-worker-1
-k8s-worker-2
+k3s-cp-0.example.internal
+k3s-cp-1.example.internal
+k3s-cp-2.example.internal
+k3s-worker-0.example.internal
+k3s-worker-1.example.internal
+k3s-worker-2.example.internal
 ```
 
 ## Per-Node Command
@@ -61,7 +59,7 @@ k8s-worker-2
 Run exactly one host at a time:
 
 ```bash
-ansible-playbook -i inventory/haplolabs/hosts.yml upgrade-k3s-one-node.yml --limit k8s-srv-0
+ansible-playbook -i inventory/private/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
 ```
 
 Repeat with the next host only after validation passes.
@@ -79,8 +77,8 @@ kubectl -n calico-system get deployment,daemonset,pods -o wide
 kubectl get tigerastatuses.operator.tigera.io -o wide
 kubectl -n metallb-system get deployment,daemonset,pods -o wide
 kubectl -n metallb-system get servicel2statuses -o wide
-kubectl -n vault-prod get pods -o wide
-kubectl -n vault-prod get endpoints vault-active vault-active-lb vault-standby -o wide
+kubectl -n vault get pods -o wide
+kubectl -n vault get endpoints vault-active vault-lb vault-standby -o wide
 kubectl -n longhorn-system get pods -o wide
 kubectl -n longhorn-system get volumes.longhorn.io -o wide
 ```
@@ -103,7 +101,7 @@ Stop before moving to the next node if any of these occur:
 
 - A node does not return to Ready.
 - `/readyz` fails, especially etcd readiness.
-- Vault active endpoint or `vault-active-lb` endpoint disappears unexpectedly.
+- Vault active endpoint or `vault-lb` endpoint disappears unexpectedly.
 - Longhorn reports unhealthy volumes or unavailable system pods.
 - Calico/Tigera reports Degraded or unavailable components.
 - MetalLB loses `ServiceL2Status` for Vault or ingress.
