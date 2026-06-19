@@ -23,15 +23,15 @@ ssh-add -l
 Confirm the target version in the private inventory:
 
 ```bash
-rg -n '^k3s_version:' inventory/private/group_vars/all.yml
+rg -n '^k3s_version:' ../k3s-ansible-private/inventory/haplolabs/group_vars/all.yml
 ```
 
 Run safe checks:
 
 ```bash
-ansible-inventory -i inventory/private/hosts.yml --graph
-ansible-playbook --syntax-check -i inventory/private/hosts.yml upgrade-k3s-one-node.yml
-ansible-playbook --list-hosts -i inventory/private/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
+ansible-inventory -i ../k3s-ansible-private/inventory/haplolabs/hosts.yml --graph
+ansible-playbook --syntax-check -i ../k3s-ansible-private/inventory/haplolabs/hosts.yml upgrade-k3s-one-node.yml
+ansible-playbook --list-hosts -i ../k3s-ansible-private/inventory/haplolabs/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
 kubectl get nodes -o wide
 kubectl get --raw='/readyz?verbose'
 kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded -o wide
@@ -59,7 +59,7 @@ k3s-worker-2.example.internal
 Run exactly one host at a time:
 
 ```bash
-ansible-playbook -i inventory/private/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
+ansible-playbook -i ../k3s-ansible-private/inventory/haplolabs/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
 ```
 
 Repeat with the next host only after validation passes.

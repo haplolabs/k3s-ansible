@@ -12,7 +12,7 @@
           - ansible_play_hosts_all | length == 1
         fail_msg: >-
           This playbook must target exactly one host with --limit, for example:
-          ansible-playbook -i inventory/private/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
+          ansible-playbook -i ../k3s-ansible-private/inventory/haplolabs/hosts.yml upgrade-k3s-one-node.yml --limit k3s-cp-0.example.internal
 
     - name: Gather facts for the selected node
       ansible.builtin.setup:
